@@ -1,0 +1,97 @@
+---
+title: "Breast Tumour Classification using Random Forest"
+author: "Sumanth"
+date: "4/13/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Cancer Classification (benign or malignant)
+
+The Data is loaded from the mlbench library. This data frame has 699 observations and 11 variables, one being a character variable, 9 being ordered or nominal, and 1 target class.
+
+### Import Libraries
+```{r}
+library(ggplot2)
+library(caret)
+library(naniar)  #For visual representation of missing values
+library(mlbench) #For Breast Cancer Dataset
+print('Libraries Imported!')
+```
+
+### Exploratory Data Analysis
+```{r}
+# Importing and observing the structure of the data 
+data("BreastCancer")
+summary(BreastCancer)
+```
+```{r}
+#compare and visualize missing values 
+table(complete.cases(BreastCancer))
+gg_miss_var(BreastCancer) + labs(y = "Look at all the missing ones")
+```
+
+* As we can observe, There are 16 missing values in the data. I have considered removing rows with missing values instead of imputing them. 
+```{r}
+# Data without missing values and ID column
+bc<-na.omit(BreastCancer)[,c(2:11)]
+table(complete.cases(bc))
+```
+Now, it is confirmed that there are no missing values. we will proceed to split the data
+```{r}
+#spliting the data
+set.seed(20)
+intrain <- createDataPartition(y = bc$Class, p= 0.7, list = FALSE)
+training <- bc[intrain,]
+testing <- bc[-intrain,]
+```
+### Model withouth grid search
+```{r}
+set.seed(20)
+rf.model<-train(Class~.,data=training,method='rf')
+print(rf.model)
+```
+
+## Grid search with Bootstrapped Resampling
+```{r}
+set.seed(20)
+Grid_Serach <- expand.grid(.mtry=c(2,6,8))
+#Building a random forest model
+RF_Grid_Boot<-train(Class~.,
+                 data=training,
+                 method='rf',
+                 tuneGrid=Grid_Serach)
+print(RF_Grid_Boot)
+plot(RF_Grid_Boot)
+
+preds_rf_boot <- predict(RF_Grid_Boot, testing[1:9])              
+
+confusionMatrix(table(preds_rf_boot, testing$Class))
+```
+## Grid Search with Cross-Validation (10 fold, repeated 3 times)
+```{r}
+set.seed(20)
+control <- trainControl(method="repeatedcv", number=10, repeats=3, search="grid")
+Grid_Serach <- expand.grid(.mtry=c(2,6,8))
+# Random forest Model Building
+RF_Grid_CV<-train(Class~.,
+                 data=training,
+                 method='rf',
+                 tuneGrid=Grid_Serach,
+                 trControl=control
+               )
+print(RF_Grid_CV)
+plot(RF_Grid_CV)
+#Prediction using test data
+preds_rf_cv <- predict(RF_Grid_CV, testing[1:9])              
+confusionMatrix(table(preds_rf_cv, testing$Class))
+```
+## Observations & Conclusions :
+
+* Removing the missing data instead of Imputing it yielded a better accuracy 
+* The Data Partitioning is Highly crutial part of model building.
+    * For 70% data split, it's been observed that there is **low Bias and Low variance** when compared with data split = 80%
+* The 10-fold cross validation yields a better accuracy than bootstrapped resampling
