@@ -1,7 +1,7 @@
-Breast Tumour Classification using Random Forest
+Breast Tumour Classification using SVM
 ================
-Sumanth
-4/13/2020
+Sai Sumanth
+4/18/2020
 
 # Cancer Classification (benign or malignant)
 
@@ -112,11 +112,11 @@ testing <- bc[-intrain,]
 
 ``` r
 set.seed(20)
-rf.model<-train(Class~.,data=training,method='rf')
-print(rf.model)
+svm_model<-train(Class~.,data=training,method='svmLinear',scale = FALSE)
+print(svm_model)
 ```
 
-    ## Random Forest 
+    ## Support Vector Machines with Linear Kernel 
     ## 
     ## 479 samples
     ##   9 predictor
@@ -125,30 +125,27 @@ print(rf.model)
     ## No pre-processing
     ## Resampling: Bootstrapped (25 reps) 
     ## Summary of sample sizes: 479, 479, 479, 479, 479, 479, ... 
-    ## Resampling results across tuning parameters:
+    ## Resampling results:
     ## 
-    ##   mtry  Accuracy   Kappa    
-    ##    2    0.9605913  0.9145190
-    ##   41    0.9515329  0.8944200
-    ##   80    0.9423910  0.8739099
+    ##   Accuracy   Kappa    
+    ##   0.9444312  0.8779489
     ## 
-    ## Accuracy was used to select the optimal model using the largest value.
-    ## The final value used for the model was mtry = 2.
+    ## Tuning parameter 'C' was held constant at a value of 1
 
 ## Grid search with Bootstrapped Resampling
 
 ``` r
 set.seed(20)
-Grid_Serach <- expand.grid(.mtry=c(2,6,8))
-#Building a random forest model
-RF_Grid_Boot<-train(Class~.,
+Grid_Serach <- expand.grid(.C=c(1,2.5, 6.25))
+#Building a SVM model
+SVM_Grid_Boot<-train(Class~.,
                  data=training,
-                 method='rf',
-                 tuneGrid=Grid_Serach)
-print(RF_Grid_Boot)
+                 method='svmLinear',
+                 tuneGrid=Grid_Serach,scale = FALSE)
+print(SVM_Grid_Boot)
 ```
 
-    ## Random Forest 
+    ## Support Vector Machines with Linear Kernel 
     ## 
     ## 479 samples
     ##   9 predictor
@@ -159,50 +156,50 @@ print(RF_Grid_Boot)
     ## Summary of sample sizes: 479, 479, 479, 479, 479, 479, ... 
     ## Resampling results across tuning parameters:
     ## 
-    ##   mtry  Accuracy   Kappa    
-    ##   2     0.9605913  0.9145190
-    ##   6     0.9581598  0.9094454
-    ##   8     0.9563436  0.9052808
+    ##   C     Accuracy   Kappa    
+    ##   1.00  0.9444312  0.8779489
+    ##   2.50  0.9387831  0.8653257
+    ##   6.25  0.9353456  0.8573700
     ## 
     ## Accuracy was used to select the optimal model using the largest value.
-    ## The final value used for the model was mtry = 2.
+    ## The final value used for the model was C = 1.
 
 ``` r
-plot(RF_Grid_Boot)
+plot(SVM_Grid_Boot)
 ```
 
 ![](BCC_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
-preds_rf_boot <- predict(RF_Grid_Boot, testing[1:9])              
+preds_svm_boot <- predict(SVM_Grid_Boot, testing[1:9])              
 
-confusionMatrix(table(preds_rf_boot, testing$Class))
+confusionMatrix(table(preds_svm_boot, testing$Class))
 ```
 
     ## Confusion Matrix and Statistics
     ## 
-    ##              
-    ## preds_rf_boot benign malignant
-    ##     benign       129         2
-    ##     malignant      4        69
+    ##               
+    ## preds_svm_boot benign malignant
+    ##      benign       131         5
+    ##      malignant      2        66
     ##                                           
-    ##                Accuracy : 0.9706          
-    ##                  95% CI : (0.9371, 0.9891)
+    ##                Accuracy : 0.9657          
+    ##                  95% CI : (0.9306, 0.9861)
     ##     No Information Rate : 0.652           
     ##     P-Value [Acc > NIR] : <2e-16          
     ##                                           
-    ##                   Kappa : 0.9356          
+    ##                   Kappa : 0.9236          
     ##                                           
-    ##  Mcnemar's Test P-Value : 0.6831          
+    ##  Mcnemar's Test P-Value : 0.4497          
     ##                                           
-    ##             Sensitivity : 0.9699          
-    ##             Specificity : 0.9718          
-    ##          Pos Pred Value : 0.9847          
-    ##          Neg Pred Value : 0.9452          
+    ##             Sensitivity : 0.9850          
+    ##             Specificity : 0.9296          
+    ##          Pos Pred Value : 0.9632          
+    ##          Neg Pred Value : 0.9706          
     ##              Prevalence : 0.6520          
-    ##          Detection Rate : 0.6324          
-    ##    Detection Prevalence : 0.6422          
-    ##       Balanced Accuracy : 0.9709          
+    ##          Detection Rate : 0.6422          
+    ##    Detection Prevalence : 0.6667          
+    ##       Balanced Accuracy : 0.9573          
     ##                                           
     ##        'Positive' Class : benign          
     ## 
@@ -212,18 +209,18 @@ confusionMatrix(table(preds_rf_boot, testing$Class))
 ``` r
 set.seed(20)
 control <- trainControl(method="repeatedcv", number=10, repeats=3, search="grid")
-Grid_Serach <- expand.grid(.mtry=c(2,6,8))
+Grid_Serach <- expand.grid(.C=c(1,2.5, 6.25))
 # Random forest Model Building
-RF_Grid_CV<-train(Class~.,
+SVM_Grid_CV<-train(Class~.,
                  data=training,
-                 method='rf',
+                 method='svmLinear',
                  tuneGrid=Grid_Serach,
-                 trControl=control
+                 trControl=control,scale = FALSE
                )
-print(RF_Grid_CV)
+print(SVM_Grid_CV)
 ```
 
-    ## Random Forest 
+    ## Support Vector Machines with Linear Kernel 
     ## 
     ## 479 samples
     ##   9 predictor
@@ -234,52 +231,52 @@ print(RF_Grid_CV)
     ## Summary of sample sizes: 431, 431, 431, 431, 431, 432, ... 
     ## Resampling results across tuning parameters:
     ## 
-    ##   mtry  Accuracy   Kappa    
-    ##   2     0.9575035  0.9069478
-    ##   6     0.9554196  0.9025849
-    ##   8     0.9526412  0.8962723
+    ##   C     Accuracy   Kappa    
+    ##   1.00  0.9477954  0.8846119
+    ##   2.50  0.9381163  0.8626619
+    ##   6.25  0.9360330  0.8577824
     ## 
     ## Accuracy was used to select the optimal model using the largest value.
-    ## The final value used for the model was mtry = 2.
+    ## The final value used for the model was C = 1.
 
 ``` r
-plot(RF_Grid_CV)
+plot(SVM_Grid_CV)
 ```
 
 ![](BCC_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 #Prediction using test data
-preds_rf_cv <- predict(RF_Grid_CV, testing[1:9])              
-confusionMatrix(table(preds_rf_cv, testing$Class))
+preds_svm_cv <- predict(SVM_Grid_CV, testing[1:9])              
+confusionMatrix(table(preds_svm_cv, testing$Class))
 ```
 
     ## Confusion Matrix and Statistics
     ## 
-    ##            
-    ## preds_rf_cv benign malignant
-    ##   benign       130         2
-    ##   malignant      3        69
-    ##                                          
-    ##                Accuracy : 0.9755         
-    ##                  95% CI : (0.9437, 0.992)
-    ##     No Information Rate : 0.652          
-    ##     P-Value [Acc > NIR] : <2e-16         
-    ##                                          
-    ##                   Kappa : 0.9462         
-    ##                                          
-    ##  Mcnemar's Test P-Value : 1              
-    ##                                          
-    ##             Sensitivity : 0.9774         
-    ##             Specificity : 0.9718         
-    ##          Pos Pred Value : 0.9848         
-    ##          Neg Pred Value : 0.9583         
-    ##              Prevalence : 0.6520         
-    ##          Detection Rate : 0.6373         
-    ##    Detection Prevalence : 0.6471         
-    ##       Balanced Accuracy : 0.9746         
-    ##                                          
-    ##        'Positive' Class : benign         
+    ##             
+    ## preds_svm_cv benign malignant
+    ##    benign       131         5
+    ##    malignant      2        66
+    ##                                           
+    ##                Accuracy : 0.9657          
+    ##                  95% CI : (0.9306, 0.9861)
+    ##     No Information Rate : 0.652           
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.9236          
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.4497          
+    ##                                           
+    ##             Sensitivity : 0.9850          
+    ##             Specificity : 0.9296          
+    ##          Pos Pred Value : 0.9632          
+    ##          Neg Pred Value : 0.9706          
+    ##              Prevalence : 0.6520          
+    ##          Detection Rate : 0.6422          
+    ##    Detection Prevalence : 0.6667          
+    ##       Balanced Accuracy : 0.9573          
+    ##                                           
+    ##        'Positive' Class : benign          
     ## 
 
 ## Observations & Conclusions :
@@ -289,5 +286,5 @@ confusionMatrix(table(preds_rf_cv, testing$Class))
   - The Data Partitioning is Highly crutial part of model building.
       - For 70% data split, it’s been observed that there is **low Bias
         and Low variance** when compared with data split = 80%
-  - The 10-fold cross validation yields a better accuracy than
-    bootstrapped resampling
+  - The 10-fold cross validation, bootstrapped resampling yields the
+    same accuracy.
